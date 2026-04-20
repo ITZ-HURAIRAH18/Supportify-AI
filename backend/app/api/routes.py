@@ -1,0 +1,78 @@
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+from typing import List
+from app.db.database import get_db
+from app.models import models
+from app.schemas import schemas
+from app.services.ai_service import process_message
+
+router = APIRouter()
+
+@router.get("/health")
+def health_check():
+    return {"status": "healthy"}
+
+@router.post("/message", response_model=schemas.ConversationResponse)
+def handle_message(request: schemas.MessageRequest, db: Session = Depends(get_db)):
+    ai_result = process_message(db, request.user_id, request.message)
+    
+    new_conversation = models.Conversation(
+        user_id=request.user_id,
+        message=request.message,
+        response=ai_result["response"],
+        intent=ai_result["intent"]
+    )
+    db.add(new_conversation)
+    db.commit()
+    db.refresh(new_conversation)
+    
+    return new_conversation
+
+@router.post("/webhook/message", response_model=schemas.ConversationResponse)
+def handle_webhook_message(request: schemas.MessageRequest, db: Session = Depends(get_db)):
+    # Same processing pipeline as /message
+    return handle_message(request, db)
+
+@router.get("/conversations", response_model=List[schemas.ConversationResponse])
+def get_conversations(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    conversations = db.query(models.Conversation).order_by(models.Conversation.timestamp.desc()).offset(skip).limit(limit).all()
+    return conversations
+
+@router.get("/users", response_model=List[schemas.UserResponse])
+def get_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    users = db.query(models.User).offset(skip).limit(limit).all()
+    return users
+
+@router.post("/users", response_model=schemas.UserResponse)
+def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
+    db_user = models.User(**user.dict())
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
+@router.get("/products", response_model=List[schemas.ProductResponse])
+def get_products(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    products = db.query(models.Product).offset(skip).limit(limit).all()
+    return products
+
+@router.post("/products", response_model=schemas.ProductResponse)
+def create_product(product: schemas.ProductCreate, db: Session = Depends(get_db)):
+    db_product = models.Product(**product.dict())
+    db.add(db_product)
+    db.commit()
+    db.refresh(db_product)
+    return db_product
+
+@router.get("/orders", response_model=List[schemas.OrderResponse])
+def get_orders(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    orders = db.query(models.Order).order_by(models.Order.created_at.desc()).offset(skip).limit(limit).all()
+    return orders
+
+@router.post("/orders", response_model=schemas.OrderResponse)
+def create_order(order: schemas.OrderCreate, db: Session = Depends(get_db)):
+    db_order = models.Order(**order.dict())
+    db.add(db_order)
+    db.commit()
+    db.refresh(db_order)
+    return db_order
