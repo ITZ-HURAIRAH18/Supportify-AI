@@ -8,6 +8,12 @@ app = FastAPI(
     version="1.0.0"
 )
 
+@app.middleware("http")
+async def log_requests(request, call_next):
+    print(f"[Server] Incoming {request.method} request to {request.url.path}")
+    response = await call_next(request)
+    return response
+
 # Enable CORS for the React frontend
 app.add_middleware(
     CORSMiddleware,

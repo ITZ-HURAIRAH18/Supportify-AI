@@ -65,3 +65,13 @@ class ProductResponse(ProductBase):
 class MessageRequest(BaseModel):
     user_id: int
     message: str
+
+class TelegramWebhookRequest(BaseModel):
+    user_id: str
+    message: str
+    chat_id: Optional[str] = None
+
+class TelegramWebhookResponse(BaseModel):
+    reply: str
+    intent: str
+    chat_id: Optional[str] = None

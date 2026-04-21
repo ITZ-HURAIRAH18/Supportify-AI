@@ -28,10 +28,43 @@ def handle_message(request: schemas.MessageRequest, db: Session = Depends(get_db
     
     return new_conversation
 
-@router.post("/webhook/message", response_model=schemas.ConversationResponse)
-def handle_webhook_message(request: schemas.MessageRequest, db: Session = Depends(get_db)):
-    # Same processing pipeline as /message
-    return handle_message(request, db)
+@router.post("/webhook/message", response_model=schemas.TelegramWebhookResponse)
+def handle_webhook_message(request: schemas.TelegramWebhookRequest, db: Session = Depends(get_db)):
+    """Telegram webhook endpoint - handles Telegram user IDs and returns reply format for n8n."""
+    print(f"[Webhook] Received message from user_id: {request.user_id}, chat_id: {request.chat_id}")
+    telegram_id = request.user_id
+    chat_id = request.chat_id
+
+    # Look up user by telegram_id, or create a new one automatically
+    user = db.query(models.User).filter(models.User.telegram_id == telegram_id).first()
+    if not user:
+        user = models.User(
+            name=f"Telegram User {telegram_id}",
+            email=f"telegram_{telegram_id}@placeholder.local",
+            telegram_id=telegram_id,
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+
+    # Process through AI
+    ai_result = process_message(db, user.id, request.message)
+
+    # Save conversation
+    new_conversation = models.Conversation(
+        user_id=user.id,
+        message=request.message,
+        response=ai_result["response"],
+        intent=ai_result["intent"],
+    )
+    db.add(new_conversation)
+    db.commit()
+
+    return schemas.TelegramWebhookResponse(
+        reply=ai_result["response"],
+        intent=ai_result["intent"],
+        chat_id=chat_id
+    )
 
 @router.get("/conversations", response_model=List[schemas.ConversationResponse])
 def get_conversations(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):

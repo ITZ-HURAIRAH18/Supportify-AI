@@ -10,6 +10,7 @@ class User(Base):
     name = Column(String, index=True)
     phone = Column(String, index=True)
     email = Column(String, unique=True, index=True)
+    telegram_id = Column(String, unique=True, index=True, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     conversations = relationship("Conversation", back_populates="user")

@@ -2,10 +2,14 @@ import os
 import google.generativeai as genai
 import json
 from sqlalchemy.orm import Session
+from dotenv import load_dotenv
 from app.models import models
+
+load_dotenv()
 
 # Configure Gemini
 api_key = os.getenv("GEMINI_API_KEY")
+print(f"[AI Service] Gemini API key loaded: {'Yes' if api_key else 'NO - MISSING!'}")
 if api_key:
     genai.configure(api_key=api_key)
 
@@ -18,7 +22,7 @@ generation_config = {
 }
 
 model = genai.GenerativeModel(
-  model_name="gemini-1.5-flash",
+  model_name="gemini-2.5-flash",
   generation_config=generation_config,
 )
 
