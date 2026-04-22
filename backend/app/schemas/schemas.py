@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from pydantic import ConfigDict
 from typing import Optional, List
 from datetime import datetime
 
@@ -13,9 +14,7 @@ class UserCreate(UserBase):
 class UserResponse(UserBase):
     id: int
     created_at: datetime
-
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 class ConversationBase(BaseModel):
     message: str
@@ -29,9 +28,7 @@ class ConversationResponse(ConversationBase):
     response: str
     intent: str
     timestamp: datetime
-
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 class OrderBase(BaseModel):
     status: str
@@ -44,9 +41,7 @@ class OrderResponse(OrderBase):
     id: int
     user_id: int
     created_at: datetime
-
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 class ProductBase(BaseModel):
     name: str
@@ -58,9 +53,7 @@ class ProductCreate(ProductBase):
 
 class ProductResponse(ProductBase):
     id: int
-
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 class MessageRequest(BaseModel):
     user_id: int

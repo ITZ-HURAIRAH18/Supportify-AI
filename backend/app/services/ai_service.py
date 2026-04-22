@@ -1,6 +1,7 @@
 import os
 from google import genai
 import json
+import re
 from sqlalchemy.orm import Session
 from dotenv import load_dotenv
 from app.models import models
@@ -22,6 +23,65 @@ generation_config = {
   "max_output_tokens": 1024,
   "response_mime_type": "application/json",
 }
+
+
+def _extract_json_payload(raw_text: str) -> dict:
+    """Best-effort JSON parsing for model responses that may contain wrappers."""
+    if not raw_text:
+        return {}
+
+    text = raw_text.strip()
+
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        pass
+
+    fenced_match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, flags=re.DOTALL)
+    if fenced_match:
+        try:
+            return json.loads(fenced_match.group(1))
+        except json.JSONDecodeError:
+            pass
+
+    object_match = re.search(r"(\{.*\})", text, flags=re.DOTALL)
+    if object_match:
+        try:
+            return json.loads(object_match.group(1))
+        except json.JSONDecodeError:
+            pass
+
+    return {}
+
+
+def _generate_with_fallback(prompt: str):
+    model_candidates = [
+        os.getenv("GEMINI_MODEL", "gemini-2.5-flash"),
+        "gemini-1.5-flash",
+    ]
+
+    seen = set()
+    last_error = None
+
+    for model_name in model_candidates:
+        if not model_name or model_name in seen:
+            continue
+        seen.add(model_name)
+
+        try:
+            return client.models.generate_content(
+                model=model_name,
+                contents=prompt,
+                config=generation_config,
+            )
+        except Exception as exc:
+            last_error = exc
+            print(f"[AI Service] Failed model '{model_name}': {exc}")
+
+    if last_error:
+        raise last_error
+
+    raise RuntimeError("No Gemini models configured")
 
 def process_message(db: Session, user_id: int, message: str) -> dict:
     try:
@@ -62,12 +122,8 @@ Return your response strictly as a JSON object with two keys:
                 "response": "AI Service is not configured (missing API key)."
             }
 
-        response = client.models.generate_content(
-            model="gemini-1.5-flash",
-            contents=prompt,
-            config=generation_config
-        )
-        result = json.loads(response.text)
+        response = _generate_with_fallback(prompt)
+        result = _extract_json_payload(getattr(response, "text", ""))
         
         intent = result.get("intent", "general")
         reply = result.get("reply", "I'm sorry, I couldn't understand that.")
