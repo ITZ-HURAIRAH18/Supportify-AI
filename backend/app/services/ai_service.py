@@ -1,5 +1,5 @@
 import os
-import google.generativeai as genai
+from google import genai
 import json
 from sqlalchemy.orm import Session
 from dotenv import load_dotenv
@@ -10,8 +10,10 @@ load_dotenv()
 # Configure Gemini
 api_key = os.getenv("GEMINI_API_KEY")
 print(f"[AI Service] Gemini API key loaded: {'Yes' if api_key else 'NO - MISSING!'}")
+
+client = None
 if api_key:
-    genai.configure(api_key=api_key)
+    client = genai.Client(api_key=api_key)
 
 generation_config = {
   "temperature": 0.2,
@@ -20,11 +22,6 @@ generation_config = {
   "max_output_tokens": 1024,
   "response_mime_type": "application/json",
 }
-
-model = genai.GenerativeModel(
-  model_name="gemini-2.5-flash",
-  generation_config=generation_config,
-)
 
 def process_message(db: Session, user_id: int, message: str) -> dict:
     try:
@@ -59,7 +56,17 @@ Return your response strictly as a JSON object with two keys:
 2. "reply": Your smart, contextual reply.
 """
 
-        response = model.generate_content(prompt)
+        if not client:
+            return {
+                "intent": "general",
+                "response": "AI Service is not configured (missing API key)."
+            }
+
+        response = client.models.generate_content(
+            model="gemini-1.5-flash",
+            contents=prompt,
+            config=generation_config
+        )
         result = json.loads(response.text)
         
         intent = result.get("intent", "general")
