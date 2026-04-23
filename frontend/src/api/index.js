@@ -1,7 +1,9 @@
 import axios from 'axios';
 
+const DEFAULT_API_BASE_URL = 'https://supportify-ai-gules.vercel.app';
+
 const api = axios.create({
-  baseURL: 'http://localhost:8000',
+  baseURL: import.meta.env.VITE_API_BASE_URL || DEFAULT_API_BASE_URL,
 });
 
 export const getConversations = async (skip = 0, limit = 100) => {

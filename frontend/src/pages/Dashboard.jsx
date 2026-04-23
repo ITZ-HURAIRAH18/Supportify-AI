@@ -118,10 +118,10 @@ export default function Dashboard() {
       </div>
 
       <div className="flex flex-col lg:flex-row gap-6">
-        <div className="w-full lg:w-[60%] bg-bg-card border border-border rounded-lg p-5">
+        <div className="w-full lg:w-[60%] min-w-0 bg-bg-card border border-border rounded-lg p-5">
           <h3 className="text-[14px] font-medium text-text-primary mb-6">Conversations over last 7 days</h3>
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
+          <div className="h-[300px] min-w-0">
+            <ResponsiveContainer width="100%" height={300} minWidth={0}>
               <LineChart data={lineData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#1F1F1F" vertical={false} />
                 <XAxis dataKey="name" stroke="#71717A" fontSize={12} tickLine={false} axisLine={false} />
@@ -133,12 +133,12 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="w-full lg:w-[40%] bg-bg-card border border-border rounded-lg p-5">
+        <div className="w-full lg:w-[40%] min-w-0 bg-bg-card border border-border rounded-lg p-5">
           <h3 className="text-[14px] font-medium text-text-primary mb-6">Intent breakdown</h3>
-          <div className="h-[300px] flex flex-col items-center justify-center relative">
+          <div className="h-[300px] min-w-0 flex flex-col items-center justify-center relative">
             {pieData.length > 0 ? (
               <>
-                <ResponsiveContainer width="100%" height="80%">
+                <ResponsiveContainer width="100%" height={240} minWidth={0}>
                   <PieChart>
                     <Pie
                       data={pieData}
