@@ -43,19 +43,37 @@ def handle_webhook_message(request: schemas.TelegramWebhookRequest, db: Session 
             detail="Webhook payload must include a user identifier.",
         )
 
-    print(f"[Webhook] Received message from user_id: {request.user_id}, chat_id: {request.chat_id}, message: {request.message}")
+    print(f"[Webhook] Received message from user_id: {request.user_id}, chat_id: {request.chat_id}, username: {request.username}, message: {request.message}")
     telegram_id = request.user_id
     chat_id = request.chat_id
+    username = (request.username or "").strip()
+    first_name = (request.first_name or "").strip()
+    last_name = (request.last_name or "").strip()
+
+    telegram_display_name = username
+    if not telegram_display_name:
+        full_name = f"{first_name} {last_name}".strip()
+        if full_name:
+            telegram_display_name = full_name
+
+    if not telegram_display_name:
+        telegram_display_name = f"Telegram User {telegram_id}"
+
+    placeholder_name = f"Telegram User {telegram_id}"
 
     # Look up user by telegram_id, or create a new one automatically
     user = db.query(models.User).filter(models.User.telegram_id == telegram_id).first()
     if not user:
         user = models.User(
-            name=f"Telegram User {telegram_id}",
+            name=telegram_display_name,
             email=f"telegram_{telegram_id}@placeholder.local",
             telegram_id=telegram_id,
         )
         db.add(user)
+        db.commit()
+        db.refresh(user)
+    elif user.name == placeholder_name and telegram_display_name != placeholder_name:
+        user.name = telegram_display_name
         db.commit()
         db.refresh(user)
 

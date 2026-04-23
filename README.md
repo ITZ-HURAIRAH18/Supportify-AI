@@ -124,6 +124,8 @@ Use these nodes in this order:
 4. `Telegram` send message node for success reply
 5. Optional `Telegram` send message node for error path
 
+Use the live Telegram payload, not a hardcoded test body, once the workflow is working.
+
 `HTTP Request` node values:
 
 - Method: `POST`
@@ -139,6 +141,18 @@ Use these nodes in this order:
    chat_id: String($('Telegram Trigger').item.json.message.chat.id)
 } }}
 ```
+
+If you want a quick one-time test in n8n, you can temporarily replace the JSON body with:
+
+```json
+{
+   "user_id": "3",
+   "message": "hello",
+   "chat_id": "4"
+}
+```
+
+This only proves the backend path. For real Telegram automation, switch back to the live expression above.
 
 Success Telegram node values:
 
@@ -165,6 +179,7 @@ Invoke-RestMethod -Method Get -Uri "https://api.telegram.org/bot<YOUR_BOT_TOKEN>
 - `Missing required credential: telegramApi`: Telegram credential is not selected on one or more Telegram nodes.
 - Browser console shows ngrok issues: use `http://127.0.0.1:5678` for editor, not ngrok URL.
 - Do not keep trailing spaces in `WEBHOOK_URL`; a trailing space becomes `%20` and breaks requests.
+- If Telegram shows `I'm currently experiencing technical difficulties...`, the backend AI call failed and returned its fallback text. Check backend logs for `Error in Gemini AI Service:` and verify `GEMINI_API_KEY` in Vercel.
 
 ---
 

@@ -64,6 +64,9 @@ class TelegramWebhookRequest(BaseModel):
     user_id: Optional[str] = None
     message: Optional[str] = None
     chat_id: Optional[str] = None
+    username: Optional[str] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
     model_config = ConfigDict(extra="allow")
 
     @model_validator(mode="before")
@@ -92,6 +95,14 @@ class TelegramWebhookRequest(BaseModel):
                 if user_id is not None:
                     normalized["user_id"] = str(user_id)
 
+            if isinstance(nested_from, dict):
+                if normalized.get("username") is None and nested_from.get("username") is not None:
+                    normalized["username"] = str(nested_from.get("username"))
+                if normalized.get("first_name") is None and nested_from.get("first_name") is not None:
+                    normalized["first_name"] = str(nested_from.get("first_name"))
+                if normalized.get("last_name") is None and nested_from.get("last_name") is not None:
+                    normalized["last_name"] = str(nested_from.get("last_name"))
+
         if normalized.get("message") is None:
             for key in ("text", "content", "body"):
                 value = normalized.get(key)
@@ -111,6 +122,27 @@ class TelegramWebhookRequest(BaseModel):
                 value = normalized.get(key)
                 if value is not None:
                     normalized["chat_id"] = str(value)
+                    break
+
+        if normalized.get("username") is None:
+            for key in ("telegram_username", "user_name", "from_username"):
+                value = normalized.get(key)
+                if isinstance(value, str) and value.strip():
+                    normalized["username"] = value.strip()
+                    break
+
+        if normalized.get("first_name") is None:
+            for key in ("from_first_name", "given_name"):
+                value = normalized.get(key)
+                if isinstance(value, str) and value.strip():
+                    normalized["first_name"] = value.strip()
+                    break
+
+        if normalized.get("last_name") is None:
+            for key in ("from_last_name", "family_name"):
+                value = normalized.get(key)
+                if isinstance(value, str) and value.strip():
+                    normalized["last_name"] = value.strip()
                     break
 
         return normalized
