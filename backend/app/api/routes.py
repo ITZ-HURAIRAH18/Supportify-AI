@@ -31,7 +31,19 @@ def handle_message(request: schemas.MessageRequest, db: Session = Depends(get_db
 @router.post("/webhook/message", response_model=schemas.TelegramWebhookResponse)
 def handle_webhook_message(request: schemas.TelegramWebhookRequest, db: Session = Depends(get_db)):
     """Telegram webhook endpoint - handles Telegram user IDs and returns reply format for n8n."""
-    print(f"[Webhook] Received message from user_id: {request.user_id}, chat_id: {request.chat_id}")
+    if not request.message:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Webhook payload must include a message text field.",
+        )
+
+    if not request.user_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Webhook payload must include a user identifier.",
+        )
+
+    print(f"[Webhook] Received message from user_id: {request.user_id}, chat_id: {request.chat_id}, message: {request.message}")
     telegram_id = request.user_id
     chat_id = request.chat_id
 
