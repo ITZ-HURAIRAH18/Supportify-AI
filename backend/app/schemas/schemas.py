@@ -8,6 +8,7 @@ class UserBase(BaseModel):
     name: str
     phone: Optional[str] = None
     email: str
+    location: Optional[str] = None
 
 class UserCreate(UserBase):
     pass
@@ -31,9 +32,27 @@ class ConversationResponse(ConversationBase):
     timestamp: datetime
     model_config = ConfigDict(from_attributes=True)
 
+class OrderItemBase(BaseModel):
+    product_id: int
+    quantity: int
+    price: float
+
+class OrderItemCreate(OrderItemBase):
+    pass
+
+class OrderItemResponse(OrderItemBase):
+    id: int
+    order_id: int
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
 class OrderBase(BaseModel):
     status: str
     amount: float
+    location: Optional[str] = None
+    delivery_date: Optional[datetime] = None
+    payment_method: str = "COD"
+    notes: Optional[str] = None
 
 class OrderCreate(OrderBase):
     user_id: int
@@ -42,6 +61,8 @@ class OrderResponse(OrderBase):
     id: int
     user_id: int
     created_at: datetime
+    updated_at: datetime
+    items: List[OrderItemResponse] = []
     model_config = ConfigDict(from_attributes=True)
 
 class ProductBase(BaseModel):

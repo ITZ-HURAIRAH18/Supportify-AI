@@ -5,8 +5,7 @@ from app.db.database import get_db
 from app.models import models
 from app.schemas import schemas
 from app.services.ai_service import process_message
-
-router = APIRouter()
+from app.services.order_service import create_order_from_confirmation, get_order_by_user
 
 @router.get("/health")
 def health_check():
@@ -79,20 +78,40 @@ def handle_webhook_message(request: schemas.TelegramWebhookRequest, db: Session 
 
     # Process through AI
     ai_result = process_message(db, user.id, request.message)
+    
+    # Handle order confirmation action
+    final_reply = ai_result.get("response", "")
+    
+    if ai_result.get("action") == "confirm_order":
+        product_id = ai_result.get("product_id")
+        quantity = ai_result.get("quantity")
+        location = ai_result.get("location")
+        
+        if product_id and quantity and location:
+            order_result = create_order_from_confirmation(db, user.id, product_id, quantity, location)
+            if order_result.get("success"):
+                # Enhance reply with order details
+                final_reply += f"\n\n✅ Order Confirmed!\n"
+                final_reply += f"Order ID: #{order_result['order_id']}\n"
+                final_reply += f"Product: {order_result['product_name']} x{order_result['quantity']}\n"
+                final_reply += f"Total: Rs. {order_result['total_amount']}\n"
+                final_reply += f"Location: {order_result['location']}\n"
+                final_reply += f"Estimated Delivery: {order_result['delivery_days']} days ({order_result['delivery_date']})\n"
+                final_reply += f"Payment: COD (Cash on Delivery)"
 
     # Save conversation
     new_conversation = models.Conversation(
         user_id=user.id,
         message=request.message,
-        response=ai_result["response"],
-        intent=ai_result["intent"],
+        response=final_reply,
+        intent=ai_result.get("intent", "general"),
     )
     db.add(new_conversation)
     db.commit()
 
     return schemas.TelegramWebhookResponse(
-        reply=ai_result["response"],
-        intent=ai_result["intent"],
+        reply=final_reply,
+        intent=ai_result.get("intent", "general"),
         chat_id=chat_id
     )
 
@@ -131,6 +150,14 @@ def create_product(product: schemas.ProductCreate, db: Session = Depends(get_db)
 def get_orders(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     orders = db.query(models.Order).order_by(models.Order.created_at.desc()).offset(skip).limit(limit).all()
     return orders
+
+@router.get("/orders/user/{user_id}")
+def get_user_orders(user_id: int, limit: int = 10, db: Session = Depends(get_db)):
+    """Get orders for a specific user - used by Telegram bot for order tracking."""
+    orders = get_order_by_user(db, user_id, limit)
+    if not orders:
+        return {"orders": [], "message": "No orders found"}
+    return {"orders": orders, "count": len(orders)}
 
 @router.post("/orders", response_model=schemas.OrderResponse)
 def create_order(order: schemas.OrderCreate, db: Session = Depends(get_db)):

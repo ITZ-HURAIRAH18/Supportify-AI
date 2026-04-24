@@ -106,31 +106,55 @@ def process_message(db: Session, user_id: int, message: str) -> dict:
             first_name = (user.name or "").strip().split(" ")[0] if user.name else "there"
             return {
                 "intent": "general",
-                "response": f"Hello {first_name}! How can I help you today?"
+                "response": f"Hello {first_name}! 👋 How can I assist you today? You can ask about products, check your orders, or place a new order."
             }
 
         # Gather context
         recent_orders = db.query(models.Order).filter(models.Order.user_id == user_id).order_by(models.Order.created_at.desc()).limit(3).all()
-        orders_context = [{"id": o.id, "status": o.status, "amount": o.amount} for o in recent_orders]
+        orders_context = [{"id": o.id, "status": o.status, "amount": o.amount, "location": o.location, "delivery_date": o.delivery_date.strftime("%Y-%m-%d") if o.delivery_date else None} for o in recent_orders]
         
-        products = db.query(models.Product).limit(10).all()
-        products_context = [{"name": p.name, "price": p.price, "description": p.description} for p in products]
+        products = db.query(models.Product).limit(15).all()
+        products_context = [{"id": p.id, "name": p.name, "price": p.price, "description": p.description} for p in products]
 
         prompt = f"""
-You are an AI Customer Support Assistant for an e-commerce platform.
-Classify the user's message intent into one of these exact strings: 'price_query', 'order_status', 'complaint', 'general'.
-Provide a helpful 'reply' to the user based on the context.
+You are a God-level Customer Support AI Assistant. You are friendly, natural, and helpful like talking to a real person.
+Your goal is to help customers with products, orders, and support.
 
-Context Data:
-User Name: {user.name}
-Recent Orders: {json.dumps(orders_context)}
-Products: {json.dumps(products_context)}
+Current Context:
+- User: {user.name}
+- Location: {user.location or "Not provided yet"}
+- Recent Orders: {json.dumps(orders_context[:2])}
+- Available Products: {json.dumps(products_context)}
 
 User Message: "{message}"
 
-Return your response strictly as a JSON object with two keys:
-1. "intent": The classified intent.
-2. "reply": Your smart, contextual reply.
+Detect the user's intent and respond naturally. Possible intents:
+- "greeting": User says hello
+- "product_inquiry": Asking about products, prices, or descriptions
+- "order_inquiry": Asking about existing orders or order status
+- "place_order": Wants to place a new order
+- "order_tracking": Asking about delivery
+- "complaint": Has an issue or complaint
+- "general": General questions
+
+If the user wants to place an order:
+1. Ask which product they want (if not mentioned)
+2. Ask quantity (if not mentioned)
+3. Ask location for delivery
+4. Confirm the order with total price, quantity, and estimated delivery days
+5. End with: "✅ Your order is confirmed! Payment method: COD (Cash on Delivery)"
+
+Be conversational and natural. Use emojis occasionally. Keep responses concise but helpful.
+
+Return your response as JSON with exactly these keys:
+{{
+  "intent": "one of the intents above",
+  "reply": "Your natural, conversational response",
+  "action": "none|ask_product|ask_quantity|ask_location|confirm_order",
+  "product_id": null or product_id if asking about/ordering,
+  "quantity": null or quantity if asking about/ordering,
+  "location": null or location if asking about/ordering
+}}
 """
 
         if not client:
@@ -143,11 +167,19 @@ Return your response strictly as a JSON object with two keys:
         result = _extract_json_payload(getattr(response, "text", ""))
         
         intent = result.get("intent", "general")
-        reply = result.get("reply", "I'm sorry, I couldn't understand that.")
+        reply = result.get("reply", "I'm sorry, I couldn't understand that. Can you rephrase?")
+        action = result.get("action", "none")
+        product_id = result.get("product_id")
+        quantity = result.get("quantity")
+        location = result.get("location")
 
         return {
             "intent": intent,
-            "response": reply
+            "response": reply,
+            "action": action,
+            "product_id": product_id,
+            "quantity": quantity,
+            "location": location
         }
     except Exception as e:
         print(f"Error in Gemini AI Service: {e}")
