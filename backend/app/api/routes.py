@@ -93,7 +93,7 @@ def handle_webhook_message(request: schemas.TelegramWebhookRequest, db: Session 
             order_result = create_order_from_confirmation(db, user.id, product_id, quantity, location)
             if order_result.get("success"):
                 # Enhance reply with order details
-                final_reply += f"\n\nâœ… Order Confirmed!\n"
+                final_reply += f"\n\nOrder Confirmed!\n"
                 final_reply += f"Order ID: #{order_result['order_id']}\n"
                 final_reply += f"Product: {order_result['product_name']} x{order_result['quantity']}\n"
                 final_reply += f"Total: Rs. {order_result['total_amount']}\n"
