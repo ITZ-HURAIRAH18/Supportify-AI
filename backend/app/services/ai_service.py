@@ -24,6 +24,16 @@ generation_config = {
   "response_mime_type": "application/json",
 }
 
+GREETING_PATTERN = re.compile(r"^(hi|hello|hey|hii|hello there|good (morning|afternoon|evening))\b[.!?\s]*$", re.IGNORECASE)
+
+
+def _is_greeting(message: str) -> bool:
+    normalized_message = (message or "").strip().lower()
+    if not normalized_message:
+        return False
+
+    return bool(GREETING_PATTERN.match(normalized_message))
+
 
 def _extract_json_payload(raw_text: str) -> dict:
     """Best-effort JSON parsing for model responses that may contain wrappers."""
@@ -90,6 +100,13 @@ def process_message(db: Session, user_id: int, message: str) -> dict:
             return {
                 "response": "I'm sorry, I couldn't find your user account.",
                 "intent": "general"
+            }
+
+        if _is_greeting(message):
+            first_name = (user.name or "").strip().split(" ")[0] if user.name else "there"
+            return {
+                "intent": "general",
+                "response": f"Hello {first_name}! How can I help you today?"
             }
 
         # Gather context
