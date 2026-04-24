@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+﻿from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 from app.db.database import get_db
@@ -6,6 +6,8 @@ from app.models import models
 from app.schemas import schemas
 from app.services.ai_service import process_message
 from app.services.order_service import create_order_from_confirmation, get_order_by_user
+
+router = APIRouter()
 
 @router.get("/health")
 def health_check():
@@ -91,7 +93,7 @@ def handle_webhook_message(request: schemas.TelegramWebhookRequest, db: Session 
             order_result = create_order_from_confirmation(db, user.id, product_id, quantity, location)
             if order_result.get("success"):
                 # Enhance reply with order details
-                final_reply += f"\n\n✅ Order Confirmed!\n"
+                final_reply += f"\n\nâœ… Order Confirmed!\n"
                 final_reply += f"Order ID: #{order_result['order_id']}\n"
                 final_reply += f"Product: {order_result['product_name']} x{order_result['quantity']}\n"
                 final_reply += f"Total: Rs. {order_result['total_amount']}\n"
