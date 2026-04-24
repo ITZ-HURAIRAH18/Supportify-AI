@@ -1,4 +1,4 @@
-﻿from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 from app.db.database import get_db
@@ -73,7 +73,7 @@ def handle_webhook_message(request: schemas.TelegramWebhookRequest, db: Session 
         db.add(user)
         db.commit()
         db.refresh(user)
-    elif user.name == placeholder_name and telegram_display_name != placeholder_name:
+    elif telegram_display_name != placeholder_name and user.name != telegram_display_name:
         user.name = telegram_display_name
         db.commit()
         db.refresh(user)
