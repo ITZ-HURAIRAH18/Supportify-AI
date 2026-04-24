@@ -1,0 +1,191 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "id": "ae516348-4b38-4f40-9d97-7d68547dbb6a",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1,
+      "position": [
+        -2160,
+        848
+      ],
+      "webhookId": "1c4b275c-df54-431e-ac93-2f5189489b4c",
+      "credentials": {
+        "telegramApi": {
+          "id": "exxPRnGN5tiYYnlk",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.message.text }}",
+              "operation": "isNotEmpty"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "db224c2e-6792-4102-9c24-56098ac5bbad",
+      "name": "Has Text?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -1920,
+        848
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://supportify-ai-gules.vercel.app/webhook/message",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ {\n  user_id: String($('Telegram Trigger').item.json.message.from.id),\n  message: $('Telegram Trigger').item.json.message.text,\n  chat_id: String($('Telegram Trigger').item.json.message.chat.id),\n  username: $('Telegram Trigger').item.json.message.from.username,\n  first_name: $('Telegram Trigger').item.json.message.from.first_name,\n  last_name: $('Telegram Trigger').item.json.message.from.last_name\n} }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          },
+          "timeout": 30000
+        }
+      },
+      "id": "411dd947-c512-44ec-a0e8-46cb02fa8456",
+      "name": "Send to FastAPI",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1664,
+        768
+      ],
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $json.reply }}",
+        "additionalFields": {
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "54f6c626-02dd-448a-bf3c-b16ba675e5b1",
+      "name": "Send Telegram Reply",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        -1392,
+        656
+      ],
+      "webhookId": "a6d9fd4f-f99f-41f5-a0f1-7df86bc1a452",
+      "credentials": {
+        "telegramApi": {
+          "id": "exxPRnGN5tiYYnlk",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.message.chat.id }}",
+        "text": "Please send text messages only.",
+        "additionalFields": {}
+      },
+      "id": "868997b7-afc1-4624-875b-2f49430a6185",
+      "name": "Reply Non-Text",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        -1664,
+        960
+      ],
+      "webhookId": "91e0b3cc-4e05-46d5-9507-d8e1e9be71cf",
+      "credentials": {
+        "telegramApi": {
+          "id": "exxPRnGN5tiYYnlk",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "Temporary error contacting support backend. Please try again.",
+        "additionalFields": {}
+      },
+      "id": "64e0b7fe-d4ff-4af1-ac72-5eed364d4415",
+      "name": "Reply On HTTP Error",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1,
+      "position": [
+        -1392,
+        896
+      ],
+      "webhookId": "0d707b7d-32fc-4933-a159-786261896a49",
+      "credentials": {
+        "telegramApi": {
+          "id": "exxPRnGN5tiYYnlk",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Has Text?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Text?": {
+      "main": [
+        [
+          {
+            "node": "Send to FastAPI",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reply Non-Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send to FastAPI": {
+      "main": [
+        [
+          {
+            "node": "Send Telegram Reply",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reply On HTTP Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
