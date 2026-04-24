@@ -164,6 +164,10 @@ def _deterministic_order_response(db: Session, user_id: int, user_name: str, mes
     location_mentioned = _extract_location(message) is not None
     order_like = bool(ORDER_INTENT_PATTERN.search(normalized)) or product_mentioned or qty_mentioned or location_mentioned
 
+    # Ignore if it looks like a general product inquiry
+    if any(word in normalized for word in ["list", "catalog", "show", "available", "products", "price"]):
+        return None
+
     if not order_like:
         return None
 
@@ -341,9 +345,12 @@ def process_message(db: Session, user_id: int, message: str) -> dict:
         products = db.query(models.Product).limit(15).all()
         products_context = [{"id": p.id, "name": p.name, "price": p.price, "description": p.description} for p in products]
 
-        deterministic_order = _deterministic_order_response(db, user_id, user.name, message, products, user.location)
-        if deterministic_order is not None:
-            return deterministic_order
+        # Check for deterministic responses (ordering flow)
+        # But only if it's NOT a greeting or a general product inquiry
+        if not _is_greeting(message) and not any(word in message.lower() for word in ["list", "catalog", "show", "available", "products", "price"]):
+            deterministic_order = _deterministic_order_response(db, user_id, user.name, message, products, user.location)
+            if deterministic_order is not None:
+                return deterministic_order
 
         prompt = f"""
 You are a God-level Customer Support AI Assistant. You are friendly, natural, and helpful like talking to a real person.
