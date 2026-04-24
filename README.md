@@ -9,6 +9,8 @@ A complete, production-ready AI Customer Support Automation System built with Fa
 - **Frontend**: React Admin Dashboard powered by Vite and Tailwind CSS.
 - **Integrations**: Supports `n8n` via webhook endpoints (`/webhook/message`).
 
+
+r
 ---
 
 ## 1. Backend Setup
