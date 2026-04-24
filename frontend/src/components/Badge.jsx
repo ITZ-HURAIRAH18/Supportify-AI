@@ -11,7 +11,7 @@ export default function Badge({ label, variant = 'gray' }) {
   const currentStyle = styles[variant] || styles.gray;
 
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium ${currentStyle}`}>
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-pill text-xs font-medium font-display ${currentStyle}`}>
       {label}
     </span>
   );

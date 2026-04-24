@@ -118,8 +118,12 @@ def handle_webhook_message(request: schemas.TelegramWebhookRequest, db: Session 
     )
 
 @router.get("/conversations", response_model=List[schemas.ConversationResponse])
-def get_conversations(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    conversations = db.query(models.Conversation).order_by(models.Conversation.timestamp.desc()).offset(skip).limit(limit).all()
+def get_conversations(skip: int = 0, limit: int = 100, user_id: int | None = None, db: Session = Depends(get_db)):
+    query = db.query(models.Conversation)
+    if user_id is not None:
+        query = query.filter(models.Conversation.user_id == user_id)
+
+    conversations = query.order_by(models.Conversation.timestamp.desc()).offset(skip).limit(limit).all()
     return conversations
 
 @router.get("/users", response_model=List[schemas.UserResponse])

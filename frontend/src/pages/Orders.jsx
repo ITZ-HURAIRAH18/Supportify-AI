@@ -52,7 +52,7 @@ export default function Orders() {
       header: 'Actions', 
       accessor: 'actions',
       render: () => (
-        <button className="px-3 py-1.5 border border-border rounded-md text-[12px] font-medium text-text-primary hover:bg-bg-hover hover:border-[#3A3A3A] transition-colors">
+        <button className="px-3 py-1.5 border border-border rounded-pill text-[12px] font-medium font-display text-text-primary hover:bg-bg-hover hover:text-accent transition-colors">
           View
         </button>
       )
@@ -63,18 +63,18 @@ export default function Orders() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-bg-card p-4 rounded-lg border border-border">
-        <h1 className="text-[20px] font-semibold text-text-primary">Orders</h1>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-bg-card p-4 rounded-lg border border-border shadow-ambient">
+        <h1 className="text-[20px] font-normal tracking-[-0.02em] font-display text-text-primary">Orders</h1>
         
-        <div className="flex p-1 bg-bg-surface rounded-md border border-border">
+        <div className="flex p-1 bg-bg-surface rounded-pill border border-border">
           {tabs.map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`px-4 py-1.5 text-[13px] font-medium rounded transition-colors ${
+              className={`px-4 py-1.5 text-[13px] font-medium font-display rounded-pill transition-colors ${
                 activeTab === tab 
                   ? "bg-bg-hover text-text-primary shadow-sm" 
-                  : "text-text-muted hover:text-text-primary"
+                  : "text-text-muted hover:text-accent"
               }`}
             >
               {tab}

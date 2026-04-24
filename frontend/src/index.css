@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=EB+Garamond:wght@400;500&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -7,22 +7,33 @@
 @layer base {
   body {
     @apply bg-bg-base text-text-primary antialiased;
-    font-family: 'Inter', sans-serif;
+    font-family: 'jjannon', 'EB Garamond', Georgia, serif;
+    font-feature-settings: "cswh" 1;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: 'CursorGothic', 'Space Grotesk', system-ui, sans-serif;
+    letter-spacing: -0.02em;
   }
 }
 
-/* Custom scrollbar for dark theme */
+/* Warm scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: #0A0A0A;
+  background: #1a1813;
 }
 ::-webkit-scrollbar-thumb {
-  background: #1A1A1A;
+  background: rgba(242, 241, 237, 0.22);
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #222222;
+  background: rgba(242, 241, 237, 0.35);
 }

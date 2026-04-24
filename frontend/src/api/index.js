@@ -6,8 +6,13 @@ const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || DEFAULT_API_BASE_URL,
 });
 
-export const getConversations = async (skip = 0, limit = 100) => {
-  const response = await api.get('/conversations', { params: { skip, limit } });
+export const getConversations = async (skip = 0, limit = 100, userId = null) => {
+  const params = { skip, limit };
+  if (userId !== null && userId !== undefined) {
+    params.user_id = userId;
+  }
+
+  const response = await api.get('/conversations', { params });
   return response.data;
 };
 
@@ -32,8 +37,6 @@ export const getOrders = async (skip = 0, limit = 100) => {
 };
 
 export const getDashboardStats = async () => {
-  // In a real app, this would be a single optimized endpoint.
-  // We'll aggregate from existing endpoints for now.
   const [conversations, users, products, orders] = await Promise.all([
     getConversations(0, 1000),
     getUsers(0, 1000),
@@ -45,8 +48,9 @@ export const getDashboardStats = async () => {
     conversations: conversations.length,
     users: users.length,
     products: products.length,
-    pendingOrders: orders.filter(o => o.status.toLowerCase() === 'pending').length,
+    confirmedOrders: orders.filter(o => (o.status || '').toLowerCase() === 'confirmed').length,
     conversationsList: conversations.slice(0, 5),
-    conversationsData: conversations
+    conversationsData: conversations,
+    ordersData: orders,
   };
 };

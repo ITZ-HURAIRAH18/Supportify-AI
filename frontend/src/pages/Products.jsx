@@ -37,11 +37,11 @@ export default function Products() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex justify-between items-center bg-bg-card p-4 rounded-lg border border-border">
-        <h1 className="text-[20px] font-semibold text-text-primary">Products</h1>
+      <div className="flex justify-between items-center bg-bg-card p-4 rounded-lg border border-border shadow-ambient">
+        <h1 className="text-[20px] font-normal tracking-[-0.02em] font-display text-text-primary">Products</h1>
         <button 
           onClick={() => setIsModalOpen(true)}
-          className="flex items-center gap-2 bg-accent hover:bg-accent-hover text-text-inverse px-4 py-2 rounded-md font-medium text-[13px] transition-colors shadow-sm"
+          className="flex items-center gap-2 bg-bg-surface hover:bg-bg-hover text-text-primary px-4 py-2 rounded-pill font-medium font-display text-[13px] transition-colors border border-border"
         >
           <Plus className="w-4 h-4" />
           Add product
@@ -57,10 +57,10 @@ export default function Products() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {products?.map((product) => (
-            <div key={product.id} className="bg-bg-card border border-border rounded-[12px] p-5 flex flex-col justify-between hover:border-border-hover transition-colors group">
+            <div key={product.id} className="bg-bg-card border border-border rounded-[12px] p-5 flex flex-col justify-between hover:border-border-hover transition-colors group shadow-ambient">
               <div>
-                <h3 className="text-[16px] font-semibold text-text-primary mb-1">{product.name}</h3>
-                <div className="text-[24px] font-bold text-accent mb-3">
+                <h3 className="text-[16px] font-medium font-display text-text-primary mb-1">{product.name}</h3>
+                <div className="text-[24px] font-normal tracking-[-0.02em] font-display text-accent mb-3">
                   Rs. {product.price.toLocaleString()}
                 </div>
                 <p className="text-[13px] text-text-muted line-clamp-2 min-h-[40px]">
@@ -68,10 +68,10 @@ export default function Products() {
                 </p>
               </div>
               <div className="flex items-center gap-2 mt-6 pt-4 border-t border-border">
-                <button className="p-2 text-text-muted hover:text-text-primary hover:bg-bg-hover rounded-md transition-colors flex-1 flex justify-center">
+                <button className="p-2 text-text-muted hover:text-accent hover:bg-bg-hover rounded-pill transition-colors flex-1 flex justify-center">
                   <Edit2 className="w-4 h-4" />
                 </button>
-                <button className="p-2 text-text-muted hover:text-status-danger-text hover:bg-status-danger-bg rounded-md transition-colors flex-1 flex justify-center">
+                <button className="p-2 text-text-muted hover:text-status-danger-text hover:bg-status-danger-bg rounded-pill transition-colors flex-1 flex justify-center">
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>
@@ -94,7 +94,7 @@ export default function Products() {
               required
               value={formData.name}
               onChange={(e) => setFormData({...formData, name: e.target.value})}
-              className="w-full bg-bg-surface border border-border rounded-md px-3 py-2 text-[14px] text-text-primary focus:outline-none focus:border-transparent focus:shadow-[0_0_0_2px_#7C3A0A] transition-shadow"
+              className="w-full bg-bg-surface border border-border rounded-md px-3 py-2 text-[14px] text-text-primary focus:outline-none focus:border-border-hover focus:shadow-[0_0_0_2px_rgba(245,78,0,0.24)] transition-shadow"
             />
           </div>
           <div>
@@ -106,7 +106,7 @@ export default function Products() {
               step="0.01"
               value={formData.price}
               onChange={(e) => setFormData({...formData, price: e.target.value})}
-              className="w-full bg-bg-surface border border-border rounded-md px-3 py-2 text-[14px] text-text-primary focus:outline-none focus:border-transparent focus:shadow-[0_0_0_2px_#7C3A0A] transition-shadow"
+              className="w-full bg-bg-surface border border-border rounded-md px-3 py-2 text-[14px] text-text-primary focus:outline-none focus:border-border-hover focus:shadow-[0_0_0_2px_rgba(245,78,0,0.24)] transition-shadow"
             />
           </div>
           <div>
@@ -116,21 +116,21 @@ export default function Products() {
               rows={3}
               value={formData.description}
               onChange={(e) => setFormData({...formData, description: e.target.value})}
-              className="w-full bg-bg-surface border border-border rounded-md px-3 py-2 text-[14px] text-text-primary resize-none focus:outline-none focus:border-transparent focus:shadow-[0_0_0_2px_#7C3A0A] transition-shadow"
+              className="w-full bg-bg-surface border border-border rounded-md px-3 py-2 text-[14px] text-text-primary resize-none focus:outline-none focus:border-border-hover focus:shadow-[0_0_0_2px_rgba(245,78,0,0.24)] transition-shadow"
             />
           </div>
           <div className="flex justify-end gap-3 pt-4">
             <button 
               type="button" 
               onClick={() => setIsModalOpen(false)}
-              className="px-4 py-2 border border-border rounded-md text-[13px] font-medium text-text-primary hover:bg-bg-hover transition-colors"
+              className="px-4 py-2 border border-border rounded-pill text-[13px] font-medium font-display text-text-primary hover:bg-bg-hover transition-colors"
             >
               Cancel
             </button>
             <button 
               type="submit" 
               disabled={submitting}
-              className="px-4 py-2 bg-accent hover:bg-accent-hover text-text-inverse rounded-md text-[13px] font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 bg-accent hover:bg-accent-hover text-text-inverse rounded-pill text-[13px] font-medium font-display transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {submitting ? 'Saving...' : 'Save Product'}
             </button>

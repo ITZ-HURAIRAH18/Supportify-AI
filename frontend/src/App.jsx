@@ -27,7 +27,7 @@ function Layout() {
       <Sidebar />
       <div className="ml-[240px] flex-1 flex flex-col min-h-screen">
         <Header title={getPageTitle()} />
-        <main className="p-6 flex-1">
+        <main className="p-6 md:p-8 flex-1 bg-bg-base">
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/dashboard" element={<Dashboard />} />

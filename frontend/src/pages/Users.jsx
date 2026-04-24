@@ -1,11 +1,29 @@
 import { Users as UsersIcon } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import DataTable from "../components/DataTable";
 import Badge from "../components/Badge";
 import { useFetch } from "../hooks/useFetch";
-import { getUsers } from "../api";
+import { getUsers, getConversations } from "../api";
 
 export default function Users() {
-  const { data, loading, error } = useFetch(() => getUsers(0, 100));
+  const navigate = useNavigate();
+  const { data, loading, error } = useFetch(async () => {
+    const [users, conversations] = await Promise.all([
+      getUsers(0, 100),
+      getConversations(0, 5000),
+    ]);
+
+    const conversationCountByUser = conversations.reduce((acc, conv) => {
+      const key = conv.user_id;
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    }, {});
+
+    return users.map((user) => ({
+      ...user,
+      conversationsCount: conversationCountByUser[user.id] || 0,
+    }));
+  });
 
   const columns = [
     { 
@@ -40,13 +58,16 @@ export default function Users() {
     {
       header: 'Total Conversations',
       accessor: 'conversations',
-      render: () => <span className="text-text-muted text-[13px]">N/A</span> // Requires backend support to aggregate
+      render: (row) => <span className="text-text-muted text-[13px]">{row.conversationsCount}</span>
     },
     { 
       header: 'Actions', 
       accessor: 'actions',
-      render: () => (
-        <button className="px-3 py-1.5 border border-border rounded-md text-[12px] font-medium text-text-primary hover:bg-bg-hover hover:border-[#3A3A3A] transition-colors">
+      render: (row) => (
+        <button
+          onClick={() => navigate(`/conversations?userId=${row.id}`)}
+          className="px-3 py-1.5 border border-border rounded-pill text-[12px] font-medium font-display text-text-primary hover:bg-bg-hover hover:text-accent transition-colors"
+        >
           View
         </button>
       )
@@ -57,8 +78,8 @@ export default function Users() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex justify-between items-center bg-bg-card p-4 rounded-lg border border-border">
-        <h1 className="text-[20px] font-semibold text-text-primary flex items-center gap-2">
+      <div className="flex justify-between items-center bg-bg-card p-4 rounded-lg border border-border shadow-ambient">
+        <h1 className="text-[20px] font-normal tracking-[-0.02em] font-display text-text-primary flex items-center gap-2">
           Users
           {!loading && data && <Badge label={data.length} variant="gray" />}
         </h1>

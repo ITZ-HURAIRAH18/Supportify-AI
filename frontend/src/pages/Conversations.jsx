@@ -1,22 +1,35 @@
 import { useState } from "react";
 import { Search, Filter, ChevronLeft, ChevronRight, MessageSquare } from "lucide-react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import DataTable from "../components/DataTable";
 import Badge from "../components/Badge";
 import { useFetch } from "../hooks/useFetch";
 import { getConversations } from "../api";
 
 export default function Conversations() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const selectedUserId = searchParams.get("userId");
   const [page, setPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const limit = 10;
   
-  // In a real app, pagination is handled by passing (page-1)*limit to the API
-  const { data, loading, error } = useFetch(() => getConversations(0, 100));
+  const { data, loading, error } = useFetch(
+    () => getConversations(0, 5000, selectedUserId ? Number(selectedUserId) : null),
+    [selectedUserId]
+  );
 
-  const filteredData = data?.filter(conv => 
-    conv.message.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    conv.user_id.toString().includes(searchTerm)
-  ) || [];
+  const filteredData = data?.filter((conv) => {
+    const matchesSelectedUser = selectedUserId
+      ? String(conv.user_id) === String(selectedUserId)
+      : true;
+
+    const matchesSearch =
+      conv.message.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      conv.user_id.toString().includes(searchTerm);
+
+    return matchesSelectedUser && matchesSearch;
+  }) || [];
 
   const paginatedData = filteredData.slice((page - 1) * limit, page * limit);
   const totalPages = Math.ceil(filteredData.length / limit) || 1;
@@ -64,8 +77,20 @@ export default function Conversations() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-bg-card p-4 rounded-lg border border-border">
-        <h1 className="text-[20px] font-semibold text-text-primary">Conversations</h1>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-bg-card p-4 rounded-lg border border-border shadow-ambient">
+        <div>
+          <h1 className="text-[20px] font-normal tracking-[-0.02em] font-display text-text-primary">
+            {selectedUserId ? `Conversations for User #${selectedUserId}` : "Conversations"}
+          </h1>
+          {selectedUserId && (
+            <button
+              onClick={() => navigate('/conversations')}
+              className="mt-2 px-3 py-1.5 border border-border rounded-pill text-[12px] font-medium font-display text-text-primary hover:bg-bg-hover hover:text-accent transition-colors"
+            >
+              Clear filter
+            </button>
+          )}
+        </div>
         <div className="flex items-center gap-3 w-full sm:w-auto">
           <div className="relative w-full sm:w-64">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
@@ -74,10 +99,10 @@ export default function Conversations() {
               placeholder="Search messages..." 
               value={searchTerm}
               onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
-              className="w-full pl-9 pr-4 py-2 bg-bg-surface border border-border rounded-md text-[13px] text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all"
+              className="w-full pl-9 pr-4 py-2 bg-bg-surface border border-border rounded-md text-[13px] text-text-primary placeholder:text-text-muted focus:outline-none focus:border-border-hover focus:ring-1 focus:ring-accent/40 transition-all"
             />
           </div>
-          <button className="flex items-center gap-2 px-3 py-2 bg-bg-surface border border-border rounded-md text-[13px] text-text-primary hover:bg-bg-hover transition-colors">
+          <button className="flex items-center gap-2 px-3 py-2 bg-bg-surface border border-border rounded-pill text-[13px] text-text-primary hover:bg-bg-hover hover:text-accent transition-colors font-display">
             <Filter className="w-4 h-4" />
             <span className="hidden sm:inline">Filter</span>
           </button>
@@ -105,7 +130,7 @@ export default function Conversations() {
             <button 
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="p-1.5 rounded-md border border-border text-text-primary hover:bg-bg-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="p-1.5 rounded-pill border border-border text-text-primary hover:bg-bg-hover hover:text-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
@@ -115,7 +140,7 @@ export default function Conversations() {
             <button 
               onClick={() => setPage(p => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
-              className="p-1.5 rounded-md border border-border text-text-primary hover:bg-bg-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="p-1.5 rounded-pill border border-border text-text-primary hover:bg-bg-hover hover:text-accent disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               <ChevronRight className="w-4 h-4" />
             </button>

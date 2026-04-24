@@ -17,13 +17,13 @@ export default function Sidebar() {
       <div className="h-[60px] flex items-center px-6 border-b border-border">
         <div className="flex items-center gap-2">
           <div className="w-2 h-2 rounded-full bg-accent"></div>
-          <h1 className="text-[20px] font-semibold text-text-primary tracking-tight">
+          <h1 className="text-[20px] font-normal text-text-primary tracking-[-0.03em] font-display">
             Support<span className="text-accent">AI</span>
           </h1>
         </div>
       </div>
       
-      <nav className="flex-1 py-6 px-3 space-y-1">
+      <nav className="flex-1 py-6 px-3 space-y-1.5">
         {links.map((link) => {
           const Icon = link.icon;
           const isActive = location.pathname === link.path || (location.pathname === '/' && link.path === '/dashboard');
@@ -32,10 +32,10 @@ export default function Sidebar() {
             <Link
               key={link.name}
               to={link.path}
-              className={`flex items-center gap-3 px-3 py-2 rounded-md transition-all text-[14px] font-medium ${
+              className={`flex items-center gap-3 px-3 py-2 rounded-pill transition-all text-[14px] font-normal font-display ${
                 isActive
-                  ? "bg-accent-muted-bg text-accent-muted-text border-l-[3px] border-accent"
-                  : "text-text-muted hover:bg-bg-hover hover:text-text-primary border-l-[3px] border-transparent"
+                  ? "bg-bg-hover text-text-primary"
+                  : "text-text-muted hover:bg-bg-hover hover:text-accent"
               }`}
             >
               <Icon className="w-[18px] h-[18px]" />
