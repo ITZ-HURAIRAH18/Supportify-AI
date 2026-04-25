@@ -166,10 +166,10 @@ def _deterministic_order_response(db: Session, user_id: int, user_name: str, mes
 
     # Ignore if it looks like a general product inquiry
     if any(word in normalized for word in ["list", "catalog", "show", "available", "products", "price"]):
+        return None
 
-            # Ignore if it's an order history/tracking query
-            if any(phrase in normalized for phrase in ["my order", "order status", "where is my", "delivery", "track", "history", "previous", "give me"]):
-                return None
+    # Ignore if it's an order history/tracking query
+    if any(phrase in normalized for phrase in ["my order", "order status", "where is my", "delivery", "track", "history", "previous", "give me"]):
         return None
 
     if not order_like:
