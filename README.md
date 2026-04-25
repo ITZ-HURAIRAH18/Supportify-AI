@@ -121,46 +121,63 @@ cp .env.example .env
 npm run dev
 ```
 
-### 4. n8n Automation
+### 4. n8n Automation - Local Setup with ngrok
 
-#### Local n8n Setup with ngrok
+#### Prerequisites
+```bash
+npm install -g n8n
+```
 
-1. **Install n8n**:
-   ```bash
-   npm install -g n8n
-   ```
+#### Step 1: Start ngrok tunnel
 
-2. **Start n8n locally**:
-   ```bash
-   n8n
-   ```
-   By default, n8n runs on `http://localhost:5678`
+Open **PowerShell window #1**:
 
-3. **Expose n8n with ngrok**:
-   ```bash
-   ngrok http 5678
-   ```
-   This creates a public URL (e.g., `https://xxxx-xx-xxx-xxx-xx.ngrok.io`) that n8n can be accessed from.
+```powershell
+ngrok http 5678
+```
 
-4. **Set environment variables**:
-   - **PowerShell**:
-     ```powershell
-     $env:DATABASE_URL = "your_database_url"
-     $env:GEMINI_API_KEY = "your_gemini_key"
-     $env:TELEGRAM_BOT_TOKEN = "your_bot_token"
-     ```
-   - **Bash**:
-     ```bash
-     export DATABASE_URL="your_database_url"
-     export GEMINI_API_KEY="your_gemini_key"
-     export TELEGRAM_BOT_TOKEN="your_bot_token"
-     ```
+**Copy your HTTPS forwarding URL** (example: `https://your-subdomain.ngrok-free.dev`). You'll need this in the next step.
 
-5. **Import and Configure Workflow**:
-   - Open n8n at `http://localhost:5678`
-   - Import `n8n_workflow.json`
-   - Configure your **Telegram Credentials** and **HTTP Request** node to point to your backend
-   - Set the Telegram Webhook URL using the ngrok URL from step 3
+#### Step 2: Start n8n with clean environment
+
+Open **PowerShell window #2** and run:
+
+```powershell
+# Stop any old n8n process using port 5678
+$pid5678 = (Get-NetTCPConnection -LocalPort 5678 -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty OwningProcess)
+if ($pid5678) { Stop-Process -Id $pid5678 -Force }
+
+# Clear old values
+$env:N8N_PATH = $null
+$env:WEBHOOK_URL = $null
+$env:N8N_EDITOR_BASE_URL = $null
+$env:N8N_DIAGNOSTICS_ENABLED = $null
+
+# Set new values (replace ngrok URL with your actual URL)
+$env:WEBHOOK_URL = "https://your-subdomain.ngrok-free.dev"
+$env:N8N_EDITOR_BASE_URL = "http://127.0.0.1:5678"
+$env:N8N_HOST = "0.0.0.0"
+$env:N8N_PORT = "5678"
+$env:N8N_DIAGNOSTICS_ENABLED = "false"
+
+# Start n8n
+n8n start
+```
+
+#### Step 3: Access n8n
+
+Open your browser and navigate to:
+
+```
+http://127.0.0.1:5678
+```
+
+#### Step 4: Configure Workflow
+
+- Import `n8n_workflow.json`
+- Configure your **Telegram Credentials** 
+- Set the **HTTP Request** node to point to your backend
+- Use your ngrok URL (`https://your-subdomain.ngrok-free.dev`) for the Telegram Webhook URL
 
 ---
 
