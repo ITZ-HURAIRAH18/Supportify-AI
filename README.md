@@ -28,7 +28,7 @@ Supportify AI is a production-grade, AI-driven Customer Support Automation syste
 | :--- | :--- |
 | **Admin Dashboard** | [https://supportai-telegram-bot.vercel.app/](https://supportai-telegram-bot.vercel.app/) |
 | **Backend API** | [https://supportify-ai-gules.vercel.app](https://supportify-ai-gules.vercel.app) |
-| **Telegram Bot** | [Search for your bot username on Telegram] |
+| **Telegram Bot** | [https://web.telegram.org/k/#@Ai_supportsbot](https://web.telegram.org/k/#@Ai_supportsbot) |
 
 ---
 
@@ -122,10 +122,45 @@ npm run dev
 ```
 
 ### 4. n8n Automation
-1. Install and start n8n locally or via Docker.
-2. Import `n8n_workflow.json`.
-3. Configure your **Telegram Credentials** and **HTTP Request** node to point to your backend.
-4. Set the Telegram Webhook URL using `ngrok` if testing locally.
+
+#### Local n8n Setup with ngrok
+
+1. **Install n8n**:
+   ```bash
+   npm install -g n8n
+   ```
+
+2. **Start n8n locally**:
+   ```bash
+   n8n
+   ```
+   By default, n8n runs on `http://localhost:5678`
+
+3. **Expose n8n with ngrok**:
+   ```bash
+   ngrok http 5678
+   ```
+   This creates a public URL (e.g., `https://xxxx-xx-xxx-xxx-xx.ngrok.io`) that n8n can be accessed from.
+
+4. **Set environment variables**:
+   - **PowerShell**:
+     ```powershell
+     $env:DATABASE_URL = "your_database_url"
+     $env:GEMINI_API_KEY = "your_gemini_key"
+     $env:TELEGRAM_BOT_TOKEN = "your_bot_token"
+     ```
+   - **Bash**:
+     ```bash
+     export DATABASE_URL="your_database_url"
+     export GEMINI_API_KEY="your_gemini_key"
+     export TELEGRAM_BOT_TOKEN="your_bot_token"
+     ```
+
+5. **Import and Configure Workflow**:
+   - Open n8n at `http://localhost:5678`
+   - Import `n8n_workflow.json`
+   - Configure your **Telegram Credentials** and **HTTP Request** node to point to your backend
+   - Set the Telegram Webhook URL using the ngrok URL from step 3
 
 ---
 
