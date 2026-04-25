@@ -1,104 +1,164 @@
-# Supportify AI - A-Z Customer Support Automation System
+# Supportify AI 🚀
 
-Supportify AI is a premium, production-ready AI Customer Support platform. It uses **FastAPI**, **PostgreSQL**, **Gemini 2.5 Flash**, and **n8n** to automate customer interactions on Telegram with human-like intelligence.
+[![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com/)
+[![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![Google Gemini](https://img.shields.io/badge/Google_Gemini-8E75B2?style=for-the-badge&logo=google&logoColor=white)](https://deepmind.google/technologies/gemini/)
+[![n8n](https://img.shields.io/badge/n8n-FF6C37?style=for-the-badge&logo=n8n&logoColor=white)](https://n8n.io/)
+
+Supportify AI is a production-grade, AI-driven Customer Support Automation system. It bridges the gap between Telegram-based customer interactions and centralized business management. By leveraging **Google Gemini 2.0 Flash**, it provides human-like intelligence for order processing, product inquiries, and complaint handling.
 
 ---
 
-## 📁 Project Structure
+## 🌟 Key Features
+
+*   🤖 **Intelligent AI Conversations**: Powered by Google Gemini 2.0 Flash with a persistent context of the last 8 messages.
+*   🛍️ **Smart Order Flow**: Automated detection of products, quantities, and delivery locations directly from chat.
+*   📊 **Real-time Analytics Dashboard**: Premium React dashboard featuring conversion trends, intent breakdown, and order history.
+*   ⚡ **Hybrid Logic System**: Smart rule-based fallbacks ensure the bot remains responsive even if AI limits are reached.
+*   📍 **Location-aware Logistics**: Automatic delivery date calculation based on the user's city (supports major Pakistani cities).
+*   👤 **Auto-Username Detection**: Seamlessly greets users by their Telegram names for a personalized experience.
+*   🔄 **Automated Webhooks**: Orchestrated via **n8n** for robust message routing and error handling.
+
+---
+
+## 🔗 Live Demos
+
+| Component | URL |
+| :--- | :--- |
+| **Admin Dashboard** | [https://supportai-telegram-bot.vercel.app/](https://supportai-telegram-bot.vercel.app/) |
+| **Backend API** | [https://supportify-ai-gules.vercel.app](https://supportify-ai-gules.vercel.app) |
+| **Telegram Bot** | [Search for your bot username on Telegram] |
+
+---
+
+## 🛠️ Tech Stack
+
+### Backend (The Brain)
+- **Framework**: FastAPI (Python 3.12+)
+- **AI Model**: Google Gemini 2.0 Flash (via `google-genai`)
+- **Database**: PostgreSQL with SQLAlchemy ORM
+- **Migrations**: Alembic
+- **Environment**: Pydantic Settings
+
+### Frontend (The Control Center)
+- **Library**: React 19 + Vite
+- **Styling**: Tailwind CSS + Lucide React (Icons)
+- **Charts**: Recharts
+- **API Client**: Axios
+
+### Automation (The Bridge)
+- **Workflow Engine**: n8n
+- **Integration**: Telegram Bot API Webhooks
+
+---
+
+## 📂 Project Structure
 
 ```text
 Supportify AI/
-├── backend/            # FastAPI Backend (AI Logic, Database, Webhooks)
+├── backend/            # FastAPI Application
 │   ├── app/
-│   │   ├── api/        # REST Endpoints
-│   │   ├── models/     # DB Models (SQLAlchemy)
-│   │   ├── schemas/    # Data Validation (Pydantic)
-│   │   └── services/   # AI Logic (Gemini Service)
-│   └── .venv/          # Python Virtual Environment
-├── frontend/           # React Admin Dashboard (Vite + Tailwind CSS)
-│   └── src/            # Components, Pages, and UI logic
-├── n8n_workflow.json   # Exported n8n workflow source code
-└── README.md           # This master documentation
+│   │   ├── api/        # API Routes (Endpoints)
+│   │   ├── db/         # Database Connection & Session
+│   │   ├── models/     # SQLAlchemy Models
+│   │   ├── schemas/    # Pydantic Schemas
+│   │   └── services/   # AI Logic & Order Management
+│   ├── alembic/        # Database Migrations
+│   └── main.py         # Entry Point
+├── frontend/           # React Dashboard
+│   ├── src/
+│   │   ├── api/        # API Service Layer
+│   │   ├── components/ # Reusable UI Components
+│   │   ├── hooks/      # Custom React Hooks
+│   │   └── pages/      # Dashboard, Orders, Users, Products
+├── n8n_workflow.json   # Pre-configured n8n workflow
+└── README.md           # Documentation
 ```
 
 ---
 
-## 🚀 1. Backend Setup (FastAPI)
+## 🚀 Installation & Setup
 
-The backend handles the AI processing, database storage, and Telegram webhook logic.
+### 1. Prerequisites
+- Node.js 18+ & npm
+- Python 3.12+
+- PostgreSQL Database
+- Google Gemini API Key
+- Telegram Bot Token (from @BotFather)
 
-### Installation
-1.  **Navigate to backend**: `cd backend`
-2.  **Install dependencies**: `uv sync` (or `pip install -r requirements.txt`)
-3.  **Environment Variables**: Create `backend/.env`:
-    ```env
-    DATABASE_URL=postgresql://user:pass@localhost:5432/supportify
-    GEMINI_API_KEY=your_key_here
-    GEMINI_MODEL=gemini-2.0-flash
-    ```
-4.  **Run Migrations**: `uv run alembic upgrade head`
-5.  **Start Server**: `uv run uvicorn app.main:app --reload --port 8000`
+### 2. Backend Setup
+```bash
+cd backend
+# Create virtual environment
+python -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
 
----
+# Install dependencies
+pip install -r requirements.txt # or 'uv sync' if using uv
 
-## 💻 2. Frontend Setup (React Dashboard)
+# Configure environment variables
+cp .env.example .env 
+# Edit .env with your DATABASE_URL, GEMINI_API_KEY, etc.
 
-The frontend provides a premium dashboard to view conversations, orders, and user data.
+# Run migrations
+alembic upgrade head
 
-### Installation
-1.  **Navigate to frontend**: `cd frontend`
-2.  **Install dependencies**: `npm install`
-3.  **Start Dev Server**: `npm run dev` (Runs on `http://localhost:5173`)
+# Start server
+uvicorn app.main:app --reload
+```
 
----
+### 3. Frontend Setup
+```bash
+cd frontend
+npm install
 
-## 🤖 3. n8n Automation (Telegram Integration)
+# Configure environment variables
+cp .env.example .env
+# Set VITE_API_URL to http://localhost:8000
 
-n8n acts as the "bridge" between Telegram and your AI Backend.
+# Start development server
+npm run dev
+```
 
-### Running n8n with ngrok (Windows)
-To receive messages from Telegram, you must expose n8n to the internet:
-
-1.  **Start ngrok**: `ngrok http 5678`
-2.  **Copy the URL** (e.g., `https://xxxx.ngrok-free.dev`).
-3.  **Start n8n** with that URL:
-    ```powershell
-    $env:WEBHOOK_URL = "https://your-ngrok-url.ngrok-free.dev"
-    n8n start
-    ```
-4.  **Import Workflow**:
-    *   Open n8n at `http://127.0.0.1:5678`.
-    *   Go to **Workflows > Import from File**.
-    *   Select the `n8n_workflow.json` file in the root of this project.
-5.  **Activate**: Click the **"Active"** toggle in the top right.
-
----
-
-## 🛠️ 4. How to Use & Test
-
-### Testing the Bot
-1.  Open your Telegram Bot.
-2.  Send `/start` or `hi`. The bot will greet you by your **Telegram Name**.
-3.  Ask for products: `give me product list`.
-4.  Place an order: `I want to order 5 Mangoes`.
-5.  Confirm location: `Deliver to Faisalabad, Street 3`.
-
-### Monitoring
-*   **Database**: All users and conversations are stored in the `users` and `conversations` tables.
-*   **Dashboard**: Open `http://localhost:5173` to see real-time analytics and order history.
+### 4. n8n Automation
+1. Install and start n8n locally or via Docker.
+2. Import `n8n_workflow.json`.
+3. Configure your **Telegram Credentials** and **HTTP Request** node to point to your backend.
+4. Set the Telegram Webhook URL using `ngrok` if testing locally.
 
 ---
 
-## ☁️ 5. Deployment (Vercel)
+## ☁️ Deployment
 
-1.  **Backend**: Push the `backend` folder to Vercel (FastAPI template).
-2.  **Frontend**: Push the `frontend` folder to Vercel (Vite template).
-3.  **Webhook**: Update your n8n `HTTP Request` node to point to your `https://your-app.vercel.app/webhook/message` URL.
+### Backend (Vercel/Render/Railway)
+1. Set the root directory to `backend`.
+2. Configure all environment variables from `.env`.
+3. Use `uvicorn app.main:app` as the start command.
+
+### Frontend (Vercel/Netlify)
+1. Set the root directory to `frontend`.
+2. Build command: `npm run build`.
+3. Output directory: `dist`.
+4. Set `VITE_API_BASE_URL` to your production backend URL.
 
 ---
 
-## 💎 Features Included
-*   ✅ **Auto-Username Detection**: Greets users by their Telegram names automatically.
-*   ✅ **Smart Order Flow**: Detects products, quantities, and locations.
-*   ✅ **Fallbacks**: If the AI is busy, the bot uses deterministic rule-based replies.
-*   ✅ **Persistent Context**: Remembers the last 8 messages for better conversation flow.
+## 🤝 Contributing
+
+Contributions are welcome! Please follow these steps:
+1. Fork the Project.
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`).
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`).
+4. Push to the Branch (`git push origin feature/AmazingFeature`).
+5. Open a Pull Request.
+
+---
+
+## 📄 License
+
+Distributed under the MIT License. See `LICENSE` for more information.
+
+---
+
+**Developed with ❤️ by the Supportify AI Team**
