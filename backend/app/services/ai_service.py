@@ -166,6 +166,10 @@ def _deterministic_order_response(db: Session, user_id: int, user_name: str, mes
 
     # Ignore if it looks like a general product inquiry
     if any(word in normalized for word in ["list", "catalog", "show", "available", "products", "price"]):
+
+            # Ignore if it's an order history/tracking query
+            if any(phrase in normalized for phrase in ["my order", "order status", "where is my", "delivery", "track", "history", "previous", "give me"]):
+                return None
         return None
 
     if not order_like:
@@ -381,6 +385,12 @@ If the user wants to place an order:
 5. End with: "✅ Your order is confirmed! Payment method: COD (Cash on Delivery)"
 
 Be conversational and natural. Use emojis occasionally. Keep responses concise but helpful.
+
+IMPORTANT RULES:
+- If user asks for "my orders", "order status", "track", "delivery", "previous orders" → intent="order_tracking", action="none"
+- Only set action="confirm_order" if user EXPLICITLY mentions a product AND quantity AND location in recent context
+- If user says "give me orders" but hasn't placed an order yet, suggest placing one instead
+- Do NOT create a new order unless user clearly wants to place one
 
 Return your response as JSON with exactly these keys:
 {{
