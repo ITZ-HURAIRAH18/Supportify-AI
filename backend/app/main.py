@@ -17,7 +17,13 @@ async def log_requests(request, call_next):
 # Enable CORS for the React frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, specify the actual frontend URL
+    allow_origins=[
+        "http://localhost:5173",      # Local development
+        "http://localhost:3000",      # Alternative local port
+        "http://127.0.0.1:5173",      # Local IP
+        "https://supportify-ai-gules.vercel.app",  # Vercel frontend
+        "*"                           # Fallback for n8n and other services
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
