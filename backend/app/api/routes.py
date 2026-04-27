@@ -172,3 +172,87 @@ def create_order(order: schemas.OrderCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(db_order)
     return db_order
+
+
+# ============================================================================
+# AI SERVICE ENDPOINTS - These provide a controlled interface for the AI to access data
+# ============================================================================
+
+@router.get("/ai/user/{user_id}")
+def get_user_for_ai(user_id: int, db: Session = Depends(get_db)):
+    """Get user data for AI context (read-only)."""
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    return {
+        "id": user.id,
+        "name": user.name,
+        "location": user.location,
+        "email": user.email
+    }
+
+
+@router.get("/ai/orders/{user_id}")
+def get_user_orders_for_ai(user_id: int, limit: int = 3, db: Session = Depends(get_db)):
+    """Get recent orders for AI context (read-only)."""
+    orders = (
+        db.query(models.Order)
+        .filter(models.Order.user_id == user_id)
+        .order_by(models.Order.created_at.desc())
+        .limit(limit)
+        .all()
+    )
+    
+    orders_data = []
+    for order in orders:
+        orders_data.append({
+            "id": order.id,
+            "status": order.status,
+            "amount": order.amount,
+            "location": order.location,
+            "delivery_date": order.delivery_date.strftime("%Y-%m-%d") if order.delivery_date else None
+        })
+    
+    return {"orders": orders_data}
+
+
+@router.get("/ai/products")
+def get_products_for_ai(limit: int = 15, db: Session = Depends(get_db)):
+    """Get available products for AI context (read-only)."""
+    products = db.query(models.Product).limit(limit).all()
+    
+    products_data = []
+    for product in products:
+        products_data.append({
+            "id": product.id,
+            "name": product.name,
+            "price": product.price,
+            "description": product.description
+        })
+    
+    return {"products": products_data}
+
+
+@router.get("/ai/conversations/{user_id}")
+def get_user_conversations_for_ai(user_id: int, limit: int = 8, db: Session = Depends(get_db)):
+    """Get recent conversation history for AI context (read-only)."""
+    conversations = (
+        db.query(models.Conversation)
+        .filter(models.Conversation.user_id == user_id)
+        .order_by(models.Conversation.timestamp.desc())
+        .limit(limit)
+        .all()
+    )
+    
+    conversations_data = []
+    for conv in reversed(conversations):
+        if conv.message:
+            conversations_data.append({
+                "message": conv.message,
+                "timestamp": conv.timestamp.isoformat() if conv.timestamp else None
+            })
+    
+    return {"conversations": conversations_data}

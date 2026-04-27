@@ -2,12 +2,16 @@ import os
 from google import genai
 import json
 import re
+import requests
 from typing import Optional
 from sqlalchemy.orm import Session
 from dotenv import load_dotenv
 from app.models import models
 
 load_dotenv()
+
+# API Base URL for internal service calls
+API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
 
 # Configure Gemini
 api_key = os.getenv("GEMINI_API_KEY")
@@ -24,6 +28,56 @@ generation_config = {
   "max_output_tokens": 1024,
   "response_mime_type": "application/json",
 }
+
+# ============================================================================
+# API Helper Functions - Call internal APIs instead of direct DB access
+# ============================================================================
+
+def _get_user_data(user_id: int) -> Optional[dict]:
+    """Fetch user data from API endpoint."""
+    try:
+        response = requests.get(f"{API_BASE_URL}/api/ai/user/{user_id}", timeout=5)
+        if response.status_code == 200:
+            return response.json()
+    except Exception as e:
+        print(f"[AI Service] Error fetching user data: {e}")
+    return None
+
+
+def _get_user_orders(user_id: int, limit: int = 3) -> list:
+    """Fetch user orders from API endpoint."""
+    try:
+        response = requests.get(f"{API_BASE_URL}/api/ai/orders/{user_id}?limit={limit}", timeout=5)
+        if response.status_code == 200:
+            data = response.json()
+            return data.get("orders", [])
+    except Exception as e:
+        print(f"[AI Service] Error fetching user orders: {e}")
+    return []
+
+
+def _get_products(limit: int = 15) -> list:
+    """Fetch available products from API endpoint."""
+    try:
+        response = requests.get(f"{API_BASE_URL}/api/ai/products?limit={limit}", timeout=5)
+        if response.status_code == 200:
+            data = response.json()
+            return data.get("products", [])
+    except Exception as e:
+        print(f"[AI Service] Error fetching products: {e}")
+    return []
+
+
+def _get_user_conversations(user_id: int, limit: int = 8) -> list:
+    """Fetch user conversation history from API endpoint."""
+    try:
+        response = requests.get(f"{API_BASE_URL}/api/ai/conversations/{user_id}?limit={limit}", timeout=5)
+        if response.status_code == 200:
+            data = response.json()
+            return data.get("conversations", [])
+    except Exception as e:
+        print(f"[AI Service] Error fetching conversations: {e}")
+    return []
 
 GREETING_PATTERN = re.compile(r"^(hi|hello|hey|hii|hello there|good (morning|afternoon|evening))\b[.!?\s]*$", re.IGNORECASE)
 ORDER_INTENT_PATTERN = re.compile(r"\b(order|buy|purchase|chahiye|chahta|confirm)\b", re.IGNORECASE)
@@ -108,35 +162,29 @@ def _extract_location(text: str) -> Optional[str]:
     return None
 
 
-def _extract_product_from_text(text: str, products: list[models.Product]) -> Optional[models.Product]:
+def _extract_product_from_text(text: str, products: list[dict]) -> Optional[dict]:
     normalized = (text or "").strip().lower()
     if not normalized:
         return None
 
     for product in products:
-        name = (product.name or "").strip().lower()
+        name = (product.get("name") or "").strip().lower()
         if name and name in normalized:
             return product
 
     return None
 
 
-def _build_order_context(db: Session, user_id: int, current_message: str, products: list[models.Product], user_location: Optional[str]) -> dict:
+def _build_order_context(user_id: int, current_message: str, products: list[dict], user_location: Optional[str]) -> dict:
     context = {
         "product": None,
         "quantity": None,
         "location": user_location,
     }
 
-    recent_user_messages = (
-        db.query(models.Conversation)
-        .filter(models.Conversation.user_id == user_id)
-        .order_by(models.Conversation.timestamp.desc())
-        .limit(8)
-        .all()
-    )
-
-    texts = [c.message for c in reversed(recent_user_messages) if c.message]
+    # Get conversation history from API
+    conversations = _get_user_conversations(user_id, limit=8)
+    texts = [c.get("message", "") for c in conversations if c.get("message")]
     texts.append(current_message or "")
 
     for text in texts:
@@ -154,7 +202,7 @@ def _build_order_context(db: Session, user_id: int, current_message: str, produc
     return context
 
 
-def _deterministic_order_response(db: Session, user_id: int, user_name: str, message: str, products: list[models.Product], user_location: Optional[str]) -> Optional[dict]:
+def _deterministic_order_response(user_id: int, user_name: str, message: str, products: list[dict], user_location: Optional[str]) -> Optional[dict]:
     normalized = (message or "").strip().lower()
     if not normalized:
         return None
@@ -175,7 +223,7 @@ def _deterministic_order_response(db: Session, user_id: int, user_name: str, mes
     if not order_like:
         return None
 
-    context = _build_order_context(db, user_id, message, products, user_location)
+    context = _build_order_context(user_id, message, products, user_location)
     product = context["product"]
     quantity = context["quantity"]
     location = context["location"]
@@ -195,9 +243,9 @@ def _deterministic_order_response(db: Session, user_id: int, user_name: str, mes
     if not quantity:
         return {
             "intent": "place_order",
-            "response": f"Great choice! How many {product.name} would you like?",
+            "response": f"Great choice! How many {product.get('name')} would you like?",
             "action": "ask_quantity",
-            "product_id": product.id,
+            "product_id": product.get("id"),
             "quantity": None,
             "location": location,
         }
@@ -205,22 +253,22 @@ def _deterministic_order_response(db: Session, user_id: int, user_name: str, mes
     if not location:
         return {
             "intent": "place_order",
-            "response": f"Perfect. You want {quantity} {product.name}. Please share your delivery city/address.",
+            "response": f"Perfect. You want {quantity} {product.get('name')}. Please share your delivery city/address.",
             "action": "ask_location",
-            "product_id": product.id,
+            "product_id": product.get("id"),
             "quantity": quantity,
             "location": None,
         }
 
-    total_amount = product.price * quantity
+    total_amount = product.get("price", 0) * quantity
     return {
         "intent": "place_order",
         "response": (
-            f"Excellent! Confirming your order: {quantity} x {product.name}. "
+            f"Excellent! Confirming your order: {quantity} x {product.get('name')}. "
             f"Total: ${total_amount:.2f}. Delivery location: {location}."
         ),
         "action": "confirm_order",
-        "product_id": product.id,
+        "product_id": product.get("id"),
         "quantity": quantity,
         "location": location,
     }
@@ -257,18 +305,18 @@ def _generate_with_fallback(prompt: str):
     raise RuntimeError("No Gemini models configured")
 
 
-def _format_products(products: list[models.Product]) -> str:
+def _format_products(products: list[dict]) -> str:
     if not products:
         return "I don't have products configured yet."
 
     lines = ["Here are our available products:"]
     for product in products[:10]:
-        lines.append(f"- {product.name}: ${product.price}")
+        lines.append(f"- {product.get('name')}: ${product.get('price')}")
     lines.append("Tell me which product and quantity you want to order.")
     return "\n".join(lines)
 
 
-def _rule_based_fallback(message: str, products: list[models.Product], recent_orders: list[models.Order]) -> dict:
+def _rule_based_fallback(message: str, products: list[dict], recent_orders: list[dict]) -> dict:
     text = (message or "").strip().lower()
 
     if any(word in text for word in ["product", "products", "price", "list", "catalog"]):
@@ -286,8 +334,8 @@ def _rule_based_fallback(message: str, products: list[models.Product], recent_or
             reply = "I couldn't find any recent orders for you yet. If you want, I can help you place one now."
         else:
             latest = recent_orders[0]
-            eta = latest.delivery_date.strftime("%Y-%m-%d") if latest.delivery_date else "not available"
-            reply = f"Your latest order #{latest.id} is '{latest.status}'. Estimated delivery: {eta}."
+            eta = latest.get("delivery_date") or "not available"
+            reply = f"Your latest order #{latest.get('id')} is '{latest.get('status')}'. Estimated delivery: {eta}."
         return {
             "intent": "order_tracking",
             "response": reply,
@@ -328,7 +376,8 @@ def _rule_based_fallback(message: str, products: list[models.Product], recent_or
 
 def process_message(db: Session, user_id: int, message: str) -> dict:
     try:
-        user = db.query(models.User).filter(models.User.id == user_id).first()
+        # Fetch user data from API instead of direct DB access
+        user = _get_user_data(user_id)
         if not user:
             return {
                 "response": "I'm sorry, I couldn't find your user account.",
@@ -336,23 +385,20 @@ def process_message(db: Session, user_id: int, message: str) -> dict:
             }
 
         if _is_greeting(message):
-            first_name = (user.name or "").strip().split(" ")[0] if user.name else "there"
+            first_name = (user.get("name") or "").strip().split(" ")[0] if user.get("name") else "there"
             return {
                 "intent": "general",
                 "response": f"Hello {first_name}! 👋 How can I assist you today? You can ask about products, check your orders, or place a new order."
             }
 
-        # Gather context
-        recent_orders = db.query(models.Order).filter(models.Order.user_id == user_id).order_by(models.Order.created_at.desc()).limit(3).all()
-        orders_context = [{"id": o.id, "status": o.status, "amount": o.amount, "location": o.location, "delivery_date": o.delivery_date.strftime("%Y-%m-%d") if o.delivery_date else None} for o in recent_orders]
-        
-        products = db.query(models.Product).limit(15).all()
-        products_context = [{"id": p.id, "name": p.name, "price": p.price, "description": p.description} for p in products]
+        # Gather context from API endpoints
+        orders_data = _get_user_orders(user_id, limit=3)
+        products_data = _get_products(limit=15)
 
         # Check for deterministic responses (ordering flow)
         # But only if it's NOT a greeting or a general product inquiry
         if not _is_greeting(message) and not any(word in message.lower() for word in ["list", "catalog", "show", "available", "products", "price"]):
-            deterministic_order = _deterministic_order_response(db, user_id, user.name, message, products, user.location)
+            deterministic_order = _deterministic_order_response(user_id, user.get("name"), message, products_data, user.get("location"))
             if deterministic_order is not None:
                 return deterministic_order
 
@@ -361,10 +407,10 @@ You are a God-level Customer Support AI Assistant. You are friendly, natural, an
 Your goal is to help customers with products, orders, and support.
 
 Current Context:
-- User: {user.name}
-- Location: {user.location or "Not provided yet"}
-- Recent Orders: {json.dumps(orders_context[:2])}
-- Available Products: {json.dumps(products_context)}
+- User: {user.get('name')}
+- Location: {user.get('location') or "Not provided yet"}
+- Recent Orders: {json.dumps(orders_data[:2])}
+- Available Products: {json.dumps(products_data)}
 
 User Message: "{message}"
 
@@ -404,14 +450,14 @@ Return your response as JSON with exactly these keys:
 """
 
         if not client:
-            return _rule_based_fallback(message, products, recent_orders)
+            return _rule_based_fallback(message, products_data, orders_data)
 
         try:
             response = _generate_with_fallback(prompt)
             result = _extract_json_payload(getattr(response, "text", ""))
         except Exception as model_error:
             print(f"[AI Service] Using rule fallback due to model error: {model_error}")
-            return _rule_based_fallback(message, products, recent_orders)
+            return _rule_based_fallback(message, products_data, orders_data)
         
         intent = result.get("intent", "general")
         reply = result.get("reply", "I'm sorry, I couldn't understand that. Can you rephrase?")
